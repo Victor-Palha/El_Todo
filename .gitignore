@@ -24,3 +24,5 @@ el_todo-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+.DS_Store
+**/.DS_Store

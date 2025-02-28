@@ -23,6 +23,11 @@ defmodule ElTodo.Persistence.Repo do
     GenServer.call(__MODULE__, {:remove, id})
   end
 
+  @spec update(String.t(), atom()) :: {:ok, Task.t()}
+  def update(id, new_status) do
+    GenServer.call(__MODULE__, {:update, id, new_status})
+  end
+
   ## === GEN_SERVER CALLBACKS ===
   def init(init_arg), do: {:ok, init_arg}
 
@@ -36,14 +41,24 @@ defmodule ElTodo.Persistence.Repo do
     {:reply, state, state}
   end
 
-  @spec handle_call({:remove, String.t()}, {pid(), any()}, list(Task.t())) :: {:reply, :ok | :error, list(Task.t())}
+  @spec handle_call({:remove, String.t()}, {pid(), any()}, list(Task.t())) :: {:reply, {:ok, list(Task.t())} | {:error, String.t()}, list(Task.t())}
   def handle_call({:remove, id}, _from, state) do
     if Enum.any?(state, fn task -> task.id == id end) do
       new_state = Enum.reject(state, &(&1.id == id))
-      {:reply, :ok, new_state}
+      {:reply, {:ok, new_state}, new_state}
     else
-      IO.puts("This task doesn't exist :(")
-      {:reply, :error, state}
+      {:reply, {:error, "This task doesn't exist :("}, state}
+    end
+  end
+
+  @spec handle_call({:update, String.t(), atom()}, {pid(), any()}, list(Task.t())) :: {:reply, {:ok, Task.t()} | {:error, String.t()}, list(Task.t())}
+  def handle_call({:update, id, new_status}, _from, state) do
+    case Enum.find(state, fn task -> task.id == id end) do
+      nil -> {:reply, {:error, "This task doesn't exist :("}, state}
+      task ->
+        updated_task = %{task | status: new_status}
+        updated_state = Enum.map(state, fn task -> if task.id == id, do: updated_task, else: task end)
+        {:reply, {:ok, updated_task}, updated_state}
     end
   end
 end

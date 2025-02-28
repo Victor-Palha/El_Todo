@@ -11,8 +11,13 @@ defmodule ElTodo.Manager do
     Repo.list()
   end
 
-  @spec delete_task(String.t()) :: {:ok | :error}
+  @spec delete_task(String.t()) :: {:ok, [ElTodo.Tasks.Task.t()]} | {:error, String.t()}
   def delete_task(id) do
     Repo.remove(id)
+  end
+
+  @spec update_task(String.t(), atom()) :: {:ok, ElTodo.Tasks.Task.t()} | {:error, String.t()}
+  def update_task(id, new_status) do
+    Repo.update(id, new_status)
   end
 end
